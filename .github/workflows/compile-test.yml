@@ -1,6 +1,7 @@
 name: Compile Test
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -19,7 +20,6 @@ defaults:
 jobs:
   check:
     name: check
-    if: github.repository == 'ynoproject/ynoengine'
     runs-on: ubuntu-latest
     steps:
       - name: Install dependencies
@@ -30,18 +30,19 @@ jobs:
           sudo pip3 install meson
 
       - uses: actions/checkout@v6
+
       - name: Checkout buildscripts
         uses: actions/checkout@v6
         with:
           repository: EasyRPG/buildscripts
           path: buildscripts
-          ref: 'b3ed5f25c0aa9d3cfac39cec7d3e9e0614f68c7d' # FIXME: pre-SDL2 removal, delete when SDL/#15502 is fixed
+          ref: 'b3ed5f25c0aa9d3cfac39cec7d3e9e0614f68c7d'
 
       - name: Get buildscripts commit hash
         id: buildscripts-hash
         working-directory: buildscripts
         run: |
-          echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Emscripten toolchain and libraries
         id: cache
@@ -64,20 +65,28 @@ jobs:
         env:
           BUILD_LIBLCF: "1"
 
-      - run: cmake --preset yno-simd-release
+      - name: Configure YNO SIMD
+        run: cmake --preset yno-simd-release
         env:
-          EASYRPG_BUILDSCRIPTS: "${{ github.workspace }}/buildscripts"
-      - run: cmake --build --preset yno-simd-release
+          EASYRPG_BUILDSCRIPTS: ${{ github.workspace }}/buildscripts
 
-      - run: cmake --preset yno-release
+      - name: Build YNO SIMD
+        run: cmake --build --preset yno-simd-release
+
+      - name: Configure YNO
+        run: cmake --preset yno-release
         env:
-          EASYRPG_BUILDSCRIPTS: "${{ github.workspace }}/buildscripts"
-      - run: cmake --build --preset yno-release
+          EASYRPG_BUILDSCRIPTS: ${{ github.workspace }}/buildscripts
 
-      - uses: actions/upload-artifact@v4
+      - name: Build YNO
+        run: cmake --build --preset yno-release
+
+      - name: Upload WebAssembly
+        uses: actions/upload-artifact@v4
         with:
           name: ynoengine-wasm
           path: |
             build/yno-simd-release/ynoengine-simd.*
             build/yno-release/ynoengine.*
-          if-no-files-found: warn
+          if-no-files-found: error
+          retention-days: 7
