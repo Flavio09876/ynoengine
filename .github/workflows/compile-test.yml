@@ -66,27 +66,27 @@ jobs:
           BUILD_LIBLCF: "1"
 
       - name: Configure YNO SIMD
-        run: cmake --preset yno-simd-release
+        run: cmake --preset emscripten-yno-simd-release
         env:
           EASYRPG_BUILDSCRIPTS: ${{ github.workspace }}/buildscripts
 
       - name: Build YNO SIMD
-        run: cmake --build --preset yno-simd-release
+        run: cmake --build --preset emscripten-yno-simd-release
 
       - name: Configure YNO
-        run: cmake --preset yno-release
+        run: cmake --preset emscripten-yno-release
         env:
           EASYRPG_BUILDSCRIPTS: ${{ github.workspace }}/buildscripts
 
       - name: Build YNO
-        run: cmake --build --preset yno-release
+        run: cmake --build --preset emscripten-yno-release
 
       - name: Upload WebAssembly
         uses: actions/upload-artifact@v4
         with:
           name: ynoengine-wasm
           path: |
-            build/yno-simd-release/ynoengine-simd.*
-            build/yno-release/ynoengine.*
+            build/emscripten-yno-simd-release/ynoengine-simd.*
+            build/emscripten-yno-release/ynoengine.*
           if-no-files-found: error
           retention-days: 7
